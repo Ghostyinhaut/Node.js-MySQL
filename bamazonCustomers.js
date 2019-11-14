@@ -50,27 +50,32 @@ function askPuduct(){
     }
   ])
   .then(function(inquirerResponse) {
-    var ID=inquirerResponse.productID;
-    var quantity=inquirerResponse.quantity;
-    //console.log(ID);
-    //console.log(quantity);
+ 
+        var ID=inquirerResponse.productID;
+        var quantity=inquirerResponse.quantity;
+        //console.log(ID);
+        //console.log(quantity);
     
-    connection.query("SELECT * FROM products WHERE id="+ID, function(err, res) {
+        connection.query("SELECT * FROM products WHERE id="+ID, function(err, res) {
         if (err) throw err;
         // Log all results of the SELECT statement
         var unitPrice=res[0].price;
-        console.log("You are trying to purchase "+quantity+res[0].product_name);
+        console.log("You are trying to purchase "+quantity+" "+res[0].product_name);
         var totalPrice=unitPrice*quantity;
         if(quantity>res[0].quantity){
             console.log("insufficient quntity");
             updateQuntity(res[0].product_name,quantity);
             connection.end();
         }else{
-            console.log("Your total price is "+totalPrice);
+            console.log("Your total price is "+totalPrice+"$");
+            //update the quantity in the table
+            var newQuantity=res[0].quantity-quantity;
+            //console.log(newQuantity);
+            updateQuntity(res[0].product_name,newQuantity);
             connection.end();
         }
       });
-  });
+    });
 }
 
 function updateQuntity(name,quantity){
