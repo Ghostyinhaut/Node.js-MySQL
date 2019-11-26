@@ -12,7 +12,7 @@ var connection=mysql.createConnection({
     user: "root",
   
     //password
-    password: "",
+    password: "KiraIdo12@!",
     database: "bamazon"
 });
 
@@ -24,6 +24,7 @@ connection.connect(function(err) {
     //askPuduct();
 });
 
+var totalPrice=0;
 function productsList(){
     console.log("Selecting all products...\n");
     connection.query("SELECT * FROM products", function(err, res) {
@@ -55,29 +56,52 @@ function askPuduct(){
         var quantity=inquirerResponse.quantity;
         //console.log(ID);
         //console.log(quantity);
-    
-        connection.query("SELECT * FROM products WHERE id="+ID, function(err, res) {
-        if (err) throw err;
-        // Log all results of the SELECT statement
-        var unitPrice=res[0].price;
-        console.log("You are trying to purchase "+quantity+" "+res[0].product_name);
-        var totalPrice=unitPrice*quantity;
-        if(quantity>res[0].quantity){
-            console.log("insufficient quntity");
-            updateQuntity(res[0].product_name,quantity);
-            connection.end();
-        }else{
-            console.log("Your total price is "+totalPrice+"$");
-            //update the quantity in the table
-            var newQuantity=res[0].quantity-quantity;
-            //console.log(newQuantity);
-            updateQuntity(res[0].product_name,newQuantity);
-            connection.end();
-        }
-      });
+        payment(ID,quantity);
+
     });
 }
 
+function payment(ID,quantity){
+  connection.query("SELECT * FROM products WHERE id="+ID, function(err, res) {
+    if (err) throw err;
+    // Log all results of the SELECT statement
+    var unitPrice=res[0].price;
+    console.log("You are trying to purchase "+quantity+" "+res[0].product_name);
+    totalPrice=totalPrice+unitPrice*quantity;
+    if(quantity>res[0].quantity){
+        console.log("insufficient quntity");
+        updateQuntity(res[0].product_name,quantity);
+        askContinue();
+    }else{
+        console.log("Your item is added to the basket.");
+        //update the quantity in the table
+        var newQuantity=res[0].quantity-quantity;
+        //console.log(newQuantity);
+        updateQuntity(res[0].product_name,newQuantity);
+        askContinue();
+    }
+  });
+}
+
+//ask the customer if they want to add item to the busket
+function askContinue(){
+  inquirer.prompt([
+    {
+      type: "input",
+      message: "DO you want to keep shopping?Y/N",
+      name:"check"
+    }
+  ]).then(function(inquirerResponse){
+    var response=inquirerResponse.check;
+    
+    if(response.toUpperCase()=="Y"){
+      askPuduct();
+    }else{
+      console.log("your total price is: "+totalPrice+" $");
+      connection.end();
+    }
+  });
+}
 function updateQuntity(name,quantity){
 
     var query = connection.query(
@@ -89,7 +113,7 @@ function updateQuntity(name,quantity){
       ],
       function(err, res) {
         if (err) throw err;
-        console.log(name+ " products updated!\n"); 
+        //console.log(name+ " products updated!\n"); 
       }
     );
   
